@@ -161,6 +161,79 @@ int main(void)
 	};
 	struct axi_dmac *ad9250_1_dmac;
 
+	struct ad9250_platform_data ad9250_pdata_lpc = {
+		0,	// extrnPDWNmode
+		1,	// enClkDCS
+		0,	// clkSelection
+		0,	// clkDivRatio
+		0,	// clkDivPhase
+		15,	// adcVref
+		0,	// pllLowEncode
+		"ad9250-lpc" //name
+	};
+
+	struct ad9250_jesd204b_cfg ad9250_0_jesd204b_interface = {
+		0,	// jtxInStandBy
+		3,	// cmlLevel
+		0x22,	// quickCfgOption
+		1,	// subclass
+		0,	// ctrlBitsNo
+		0,	// ctrlBitsAssign
+		0,	// tailBitsMode
+		0xF0,	// did
+		0x00,	// bid
+		0x00,	// lid0
+		0x01,	// lid1
+		32,	// k
+		1,	// scrambling
+		1,	// ilasMode
+		0,	// invertLogicBits
+		0,	// enIlasTest
+		1,	// enSysRef
+		1,	// enSyncInB
+		0,	// sysRefMode
+		1,	// alignSyncInB
+		0,	// alignSysRef
+		0,	// lane0Assign
+		1,	// lane1Assign
+	};
+
+	struct ad9250_jesd204b_cfg ad9250_1_jesd204b_interface = {
+		0,	// jtxInStandBy
+		3,	// cmlLevel
+		0x22,	// quickCfgOption
+		1,	// subclass
+		0,	// ctrlBitsNo
+		0,	// ctrlBitsAssign
+		0,	// tailBitsMode
+		0xF0,	// did
+		0x00,	// bid
+		0x02,	// lid0
+		0x03,	// lid1
+		32,	// k
+		1,	// scrambling
+		1,	// ilasMode
+		0,	// invertLogicBits
+		0,	// enIlasTest
+		1,	// enSysRef
+		1,	// enSyncInB
+		0,	// sysRefMode
+		1,	// alignSyncInB
+		0,	// alignSysRef
+		0,	// lane0Assign
+		1,	// lane1Assign
+	};
+
+	struct ad9250_fast_detect_cfg ad9250_fast_detect = {
+		0,	// enFd
+		0,	// pinFunction
+		0,	// forcePins
+		0,	// pinForceValue
+		0,	// fdUpperTresh
+		0,	// fdLowerTresh
+		0,	// dfDwellTime
+	};
+
 	struct ad9250_dev		*ad9250_0_device;
 	struct ad9250_dev		*ad9250_1_device;
 	struct ad9517_dev		*ad9517_device;
@@ -237,19 +310,25 @@ int main(void)
 		printf("axi_jesd204_rx_status_read() error: %"PRIi32"\n", status);
 	}
 
+	//ADC output_format
+	ad9250_output_format(ad9250_0_device, 0);
+	ad9250_output_format(ad9250_1_device, 0);
+
 	// PRBS test
-	ad9250_test(ad9250_0_device, AD9250_TEST_PNLONG);
+	ad9250_test_mode(ad9250_0_device, 5);
+	ad9250_transfer(ad9250_0_device);
 	if(axi_adc_pn_mon(ad9250_0_core, AXI_ADC_PN23, 10) == -1) {
 		printf("%s ad9250_0 - PN23 sequence mismatch!\n", __func__);
 	};
-	ad9250_test(ad9250_1_device, AD9250_TEST_PNLONG);
+	ad9250_test_mode(ad9250_1_device, 5);
+	ad9250_transfer(ad9250_1_device);
 	if(axi_adc_pn_mon(ad9250_1_core, AXI_ADC_PN23, 10) == -1) {
 		printf("%s ad9250_1 - PN23 sequence mismatch!\n", __func__);
 	};
 
 	// set up ramp output
-	ad9250_test(ad9250_0_device, AD9250_TEST_RAMP);
-	ad9250_test(ad9250_1_device, AD9250_TEST_RAMP);
+	ad9250_test_mode(ad9250_0_device, 15);
+	ad9250_test_mode(ad9250_1_device, 15);
 
 	// test the captured data
 	axi_dmac_init(&ad9250_0_dmac, &ad9250_0_dmac_param);
@@ -259,8 +338,8 @@ int main(void)
 	axi_dmac_transfer(ad9250_1_dmac, ADC_1_DDR_BASEADDR, 16384 * 2);
 
 	// set up normal output
-	ad9250_test(ad9250_0_device, AD9250_TEST_OFF);
-	ad9250_test(ad9250_1_device, AD9250_TEST_OFF);
+	ad9250_test_mode(ad9250_0_device, 0);
+	ad9250_test_mode(ad9250_1_device, 0);
 
 	// capture data with DMA
 	axi_dmac_transfer(ad9250_0_dmac, ADC_0_DDR_BASEADDR, 16384 * 2);
