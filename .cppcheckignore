@@ -13,3 +13,4 @@
 // for further information: https://cppcheck.sourceforge.net/manual.pdf 
 
 *:drivers/adc/ad9081/api/*
+*:libraries/mbedtls/*
